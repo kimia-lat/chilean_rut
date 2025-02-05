@@ -154,9 +154,10 @@ class ChileanRut(str):
         """
         if not isinstance(value, str):
             raise TypeError(cls.translate("invalid_format"))
-        if not cls.is_valid_rut(value):
+        cleaned_value = cls.clean_rut(value)
+        if not cls.is_valid_rut(cleaned_value):
             raise ValueError(cls.translate("invalid_check_digit"))
-        return cls(value)
+        return cls(cleaned_value)
 
     @classmethod
     def __get_pydantic_core_schema__(
