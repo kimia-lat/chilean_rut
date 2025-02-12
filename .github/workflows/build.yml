@@ -1,0 +1,43 @@
+name: Build and Deploy Libraries
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel
+
+      - name: Build
+        run: |
+          ./build.sh
+        shell: bash
+
+      - name: Extract package name
+        run: |
+          PACKAGE_NAME=$(sed -n "s/^ *name='\([^']*\)'.*/\1/p" setup.py)
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
+
+      - name: Copy Files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.KEY }}
+          strip_components: 1
+          source: "dist/*"
+          target: "${{ secrets.LIBS_PATH }}/${{ env.PACKAGE_NAME }}"
